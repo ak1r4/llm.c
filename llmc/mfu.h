@@ -201,10 +201,18 @@ GPUUtilInfo get_gpu_utilization_info() {
     nvmlCheck(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_SM, &info.max_clock));
     nvmlCheck(nvmlDeviceGetPowerManagementLimit(device, &info.power_limit));
     nvmlCheck(nvmlDeviceGetPowerUsage(device, &info.power));
+#if NVML_API_VERSION >= 13
+    { nvmlTemperature_t t = {nvmlTemperature_v1, NVML_TEMPERATURE_GPU, 0}; nvmlCheck(nvmlDeviceGetTemperatureV(device, &t)); info.temperature = (unsigned int)t.temperature; }
+#else
     nvmlCheck(nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &info.temperature));
+#endif
     nvmlCheck(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_SLOWDOWN, &info.temp_slowdown));
     unsigned long long throttle;
+#if NVML_API_VERSION >= 13
+    nvmlCheck(nvmlDeviceGetCurrentClocksEventReasons(device, &throttle));
+#else
     nvmlCheck(nvmlDeviceGetCurrentClocksThrottleReasons(device, &throttle));
+#endif
     info.throttle_reason = get_throttle_reason(throttle);
     nvmlCheck(nvmlDeviceGetFanSpeed(device, &info.fan));
 
